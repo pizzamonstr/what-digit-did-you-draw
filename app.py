@@ -144,6 +144,13 @@ with draw_tab:
             with confidence_col:
                 st.metric("Confidence", f"{confidence:.1%}")
 
+            if confidence < 0.8:
+                st.warning(
+                    "The model isn't very sure about this one. "
+                    "Try drawing the digit larger, with clear, "
+                    "open loops."
+                )
+                
             top_three = np.argsort(probabilities)[::-1][:3]
 
             st.write("**Top 3 Predictions**")
