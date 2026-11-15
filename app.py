@@ -61,44 +61,53 @@ model = load_model()
 st.title("What Digit Did You Draw?")
 st.subheader("Handwritten Digit Classifier")
 
-st.write(
-    "Draw a single digit from 0 to 9 in the box below. "
-    "A neural network trained on the MNIST dataset will "
-    "guess which digit you drew and show how confident "
-    "it is in its guess."
-)
-
-left_col, right_col = st.columns(2)
-
-with left_col:
-    brush_size = st.slider(
-        "Brush Thickness",
-        min_value=10,
-        max_value=40,
-        value=28,
-        step=2
-    )
-    
-    canvas_result = st_canvas(
-        stroke_width=brush_size,
-        stroke_color="#FFFFFF",
-        background_color="#000000",
-        height=280,
-        width=280,
-        drawing_mode="freedraw",
-        key=f"canvas_{st.session_state.canvas_key}"
-    )
-
-    if st.button("Clear Drawing"):
-        st.session_state.canvas_key += 1
-        st.rerun()
+draw_tab, how_tab, tips_tab, about_tab, pixel_tab = st.tabs([
+    "Classifier",
+    "How It Works",
+    "Tips",
+    "About the Model",
+    "Pixel Values"
+])
 
 has_drawing = False
 
-with right_col:
-    if canvas_result.image_data is not None:
-        processed_image, image_array, model_input = (
-            preprocess_canvas_image(canvas_result.image_data)
+with draw_tab:
+    st.write(
+        "Draw a single digit from 0 to 9 in the box below. "
+        "A neural network trained on the MNIST dataset will "
+        "guess which digit you drew and show how confident "
+        "it is in its guess."
+    )
+
+    left_col, right_col = st.columns(2)
+
+    with left_col:
+        brush_size = st.slider(
+            "Brush Thickness",
+            min_value=10,
+            max_value=40,
+            value=28,
+            step=2
+        )
+
+        canvas_result = st_canvas(
+            stroke_width=brush_size,
+            stroke_color="#FFFFFF",
+            background_color="#000000",
+            height=280,
+            width=280,
+            drawing_mode="freedraw",
+            key=f"canvas_{st.session_state.canvas_key}"
+        )
+
+        if st.button("Clear Drawing"):
+            st.session_state.canvas_key += 1
+            st.rerun()
+
+    with right_col:
+        if canvas_result.image_data is not None:
+            processed_image, image_array, model_input = (
+                preprocess_canvas_image(canvas_result.image_data)
         )
 
         if image_array.max() == 0:
@@ -134,26 +143,21 @@ with right_col:
             top_three = np.argsort(probabilities)[::-1][:3]
 
             st.write("**Top 3 Predictions**")
-            for rank, digit in enumerate(top_three, start=1):
-                st.write(
-                    f"{rank}. Digit {digit}: "
-                    f"{probabilities[digit]:.1%}"
-                )
+            guess_labels = ["1st Guess", "2nd Guess", "3rd Guess"]
+            top_cols = st.columns(3)
+
+            for i in range(3):
+                digit = int(top_three[i])
+                with top_cols[i]:
+                    with st.container(border=True):
+                        st.metric(guess_labels[i], digit)
+                        st.caption(f"{probabilities[digit]:.1%}")
             
             st.image(
                 processed_image.resize((140, 140), Image.NEAREST),
                 caption="What the Model Sees (28 x 28)"
             )
-
-st.divider()
-
-how_tab, tips_tab, about_tab, pixel_tab = st.tabs([
-    "How It Works",
-    "Tips",
-    "About the Model",
-    "Pixel Values"
-])
-
+            
 with how_tab:
     st.markdown("**1. You Draw a Digit**")
     st.write("When you draw in the box, the canvas saves your "
