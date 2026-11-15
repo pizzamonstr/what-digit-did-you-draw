@@ -108,56 +108,56 @@ with draw_tab:
         if canvas_result.image_data is not None:
             processed_image, image_array, model_input = (
                 preprocess_canvas_image(canvas_result.image_data)
-        )
+            )
 
-        if image_array.max() == 0:
-            st.info("Draw a digit to see the model's prediction.")
-        else:
-            has_drawing = True
+            if image_array.max() == 0:
+                st.info("Draw a digit to see the model's prediction.")
+            else:
+                has_drawing = True
 
-            probabilities = model.predict(model_input, verbose=0)[0]
-            predicted_digit = int(np.argmax(probabilities))
-            confidence = float(np.max(probabilities))
+                probabilities = model.predict(model_input, verbose=0)[0]
+                predicted_digit = int(np.argmax(probabilities))
+                confidence = float(np.max(probabilities))
 
-            st.metric("Predicted Digit", predicted_digit)
-            st.metric("Confidence", f"{confidence:.1%}")
+                st.metric("Predicted Digit", predicted_digit)
+                st.metric("Confidence", f"{confidence:.1%}")
 
-            chart_data = pd.DataFrame({
-                "Digit": np.arange(10),
-                "Probability": probabilities
-            })
+                chart_data = pd.DataFrame({
+                    "Digit": np.arange(10),
+                    "Probability": probabilities
+                })
 
-            probability_chart = (
-                alt.Chart(chart_data).mark_bar().encode(
-                    x=alt.X("Digit:O",
-                            title="Digit", axis=alt.Axis(labelAngle=0)),
-                    y=alt.Y("Probability:Q",
-                            title="Probability", axis=alt.Axis(format="%"),
-                            scale=alt.Scale(domain=[0, 1]))
+                probability_chart = (
+                    alt.Chart(chart_data).mark_bar().encode(
+                        x=alt.X("Digit:O",
+                                title="Digit", axis=alt.Axis(labelAngle=0)),
+                        y=alt.Y("Probability:Q",
+                                title="Probability", axis=alt.Axis(format="%"),
+                                scale=alt.Scale(domain=[0, 1]))
+                    )
                 )
-            )
 
-            st.write("**Probability for Each Digit**")
-            st.altair_chart(probability_chart)
+                st.write("**Probability for Each Digit**")
+                st.altair_chart(probability_chart)
 
-            top_three = np.argsort(probabilities)[::-1][:3]
+                top_three = np.argsort(probabilities)[::-1][:3]
 
-            st.write("**Top 3 Predictions**")
-            guess_labels = ["1st Guess", "2nd Guess", "3rd Guess"]
-            top_cols = st.columns(3)
+                st.write("**Top 3 Predictions**")
+                guess_labels = ["1st Guess", "2nd Guess", "3rd Guess"]
+                top_cols = st.columns(3)
 
-            for i in range(3):
-                digit = int(top_three[i])
-                with top_cols[i]:
-                    with st.container(border=True):
-                        st.metric(guess_labels[i], digit)
-                        st.caption(f"{probabilities[digit]:.1%}")
-            
-            st.image(
-                processed_image.resize((140, 140), Image.NEAREST),
-                caption="What the Model Sees (28 x 28)"
-            )
-            
+                for i in range(3):
+                    digit = int(top_three[i])
+                    with top_cols[i]:
+                        with st.container(border=True):
+                            st.metric(guess_labels[i], digit)
+                            st.caption(f"{probabilities[digit]:.1%}")
+                
+                st.image(
+                    processed_image.resize((140, 140), Image.NEAREST),
+                    caption="What the Model Sees (28 x 28)"
+                )
+
 with how_tab:
     st.markdown("**1. You Draw a Digit**")
     st.write("When you draw in the box, the canvas saves your "
