@@ -1,5 +1,7 @@
 # What Digit Did You Draw?
 
+**[Try the live app](https://what-digit-did-you-draw.streamlit.app/)**
+
 A Streamlit app that guesses which digit, from 0 to 9, you draw on the
 screen. It uses a convolutional neural network (CNN) that I built and
 trained on the [MNIST dataset](https://keras.io/api/datasets/mnist/) of handwritten digits. The app shows the model's prediction, how confident it is, and what your drawing looks like after it's been prepared for the model.
@@ -75,6 +77,10 @@ it again from scratch, run:
 ```bash
 python train_model.py
 ```
+
+The app is also hosted on Streamlit Community Cloud. If it hasn't been
+used in a while, it may be asleep. Click the button to wake it up, and it
+will be ready in a minute or two.
 
 ## How It Works
 
