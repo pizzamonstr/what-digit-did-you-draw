@@ -16,6 +16,7 @@ if "canvas_key" not in st.session_state:
 def load_model():
     return keras.models.load_model("digit_classifier.keras")
 
+
 def preprocess_canvas_image(canvas_image):
     image = Image.fromarray(canvas_image.astype("uint8"))
     image = image.convert("L")
@@ -40,6 +41,7 @@ def preprocess_canvas_image(canvas_image):
     model_input = image_array.reshape(1, 28, 28, 1)
 
     return image, image_array, model_input
+
 
 model = load_model()
 
@@ -130,8 +132,102 @@ with right_col:
                 caption="What the Model Sees (28 x 28)"
             )
 
-if has_drawing:
-    with st.expander("View the 28 x 28 Pixel Values"):
+st.divider()
+
+how_tab, tips_tab, about_tab, pixel_tab = st.tabs([
+    "How It Works",
+    "Tips",
+    "About the Model",
+    "Pixel Values"
+])
+
+with how_tab:
+    st.markdown("**1. You Draw a Digit**")
+    st.write("When you draw in the box, the canvas saves your "
+             "drawing as a 280 x 280 pixel image, which is ten "
+             "times larger than the images the model was trained on.")
+
+    st.markdown("**2. The Image Is Cleaned Up**")
+    st.write("Before the model sees your drawing, it's prepared to  "
+        "match the MNIST training images. First, it's converted "
+        "to grayscale and the empty space around the digit is "
+        "cropped away. Next, the digit is shrunk to fit inside "
+        "a 20 x 20 box and centered in a 28 x 28 image. Finally, "
+        "each pixel is divided by 255, so every value falls "
+        "between 0 (black) and 1 (white).")
+
+    st.markdown("**3. Convolution Layers Find Patterns**")
+    st.write("The model then slides small 3 x 3 filters across the "
+             "image, one pixel at a time. Each filter has learned to "
+             "look for a particular pattern, such as an edge or a "
+             "curve, and responds strongly wherever that pattern "
+             "appears. This model has two convolutional layers: the "
+             "first uses 16 filters to find simple shapes, and the "
+             "second uses 32 filters to combine them into more "
+             "complex ones.")
+
+    st.caption("Shape: 28 x 28 x 1 becomes 26 x 26 x 16, then "
+               "11 x 11 x 32 after the second convolution layer.")
+
+    st.markdown("**4. Pooling Layers Shrink the Image**")
+    st.write("After each convolution layer, a pooling layer looks at "
+             "every 2 x 2 area and keeps only its strongest value. "
+             "This halves the size of the image while holding on to "
+             "the most important signals, and it also makes the "
+             "model less sensitive to exactly where each stroke "
+             "was drawn.")
+
+    st.caption("Shape: 26 x 26 x 16 becomes 13 x 13 x 16, and "
+               "11 x 11 x 32 becomes 5 x 5 x 32.")
+
+    st.markdown("**5. Dense Layers Combine the Patterns**")
+    st.write("Once the patterns have been found, they're flattened "
+             "into a single list of 800 numbers. A layer of 64 "
+             "neurons then weighs all of these together to work out "
+             "which digit the patterns most likely match.")
+
+    st.caption("Shape: 5 x 5 x 32 is flattened into 800 numbers, "
+               "then combined into 64.")
+
+    st.markdown("**6. Softmax Turns Scores Into Probabilities**")
+    st.write("The final layer has 10 neurons, one for each digit "
+             "from 0 to 9, and each one produces a score. Softmax "
+             "converts these scores into probabilities that add up "
+             "to 100%, so they can be compared directly.")
+
+    st.caption("Shape: 64 numbers become 10 probabilities.")
+
+    st.markdown("**7. The Model Makes Its Prediction**")
+    st.write("The digit with the highest probability becomes the "
+             "model's prediction, and that probability is shown as "
+             "the confidence score.")
+
+with tips_tab:
+    st.markdown("**Tips for Best Results**")
+    st.write("For the most accurate predictions, try to draw the way "
+             "the MNIST digits were written:")
+
+    st.markdown("- Draw one digit at a time, rather than a whole "
+                "number.\n"
+                "- Draw it large, so it fills most of the box.\n"
+                "- Keep loops open and clear, like the top of a 4 or "
+                "the middle of an 8, since small loops can fill in "
+                "when the image is shrunk.\n"
+                "- If a prediction looks wrong, try adjusting the "
+                "Brush Thickness slider and drawing the digit again.")
+
+with about_tab:
+    st.markdown("**About the Model**")
+    st.write("This app uses a convolutional neural network (CNN) "
+             "that I built and trained on the MNIST dataset of "
+             "handwritten digits. The model learned from 54,000 "
+             "training images, while another 6,000 were held "
+             "back to check its progress during training. When "
+             "it was tested on 10,000 images it had never seen "
+             "before, it classified 98.4% of them correctly.")
+
+with pixel_tab:
+    if has_drawing:
         pixel_table = pd.DataFrame(np.round(image_array, 1))
         shaded_table = (
             pixel_table.style
@@ -154,4 +250,6 @@ if has_drawing:
             .hide(axis="columns")
         )
         st.html(shaded_table.to_html())
+    else:
+        st.info("Draw a digit to see its pixel values.")
     
