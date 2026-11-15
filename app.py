@@ -9,6 +9,32 @@ st.set_page_config(page_title="What Digit Did You Draw?")
 if "canvas_key" not in st.session_state:
     st.session_state.canvas_key = 0
 
+def preprocess_canvas_image(canvas_image):
+    image = Image.fromarray(canvas_image.astype("uint8"))
+    image = image.convert("L")
+
+    bounding_box = image.getbbox()
+    if bounding_box is not None:
+        image = image.crop(bounding_box)
+
+    width, height = image.size
+    scale = 20 / max(width, height)
+    new_width = max(1, round(width * scale))
+    new_height = max(1, round(height * scale))
+    image = image.resize((new_width, new_height))
+
+    centered_image = Image.new("L", (28, 28), 0)
+    left = (28 - new_width) // 2
+    top = (28 - new_height) // 2
+    centered_image.paste(image, (left, top))
+    image = centered_image
+
+    image_array = np.array(image) / 255.0
+    model_input = image_array.reshape(1, 28, 28, 1)
+
+    return image, image_array, model_input
+
+
 st.title("What Digit Did You Draw?")
 st.subheader("Handwritten Digit Classifier")
 
@@ -35,3 +61,21 @@ with left_col:
     if st.button("Clear Drawing"):
         st.session_state.canvas_key += 1
         st.rerun()
+
+with right_col:
+    if canvas_result.image_data is not None:
+        processed_image, image_array, model_input = (
+            preprocess_canvas_image(canvas_result.image_data)
+        )
+
+        if image_array.max() == 0:
+            st.info("Draw a digit to see the model's prediction.")
+        else:
+            st.image(
+                processed_image.resize((140, 140), Image.NEAREST),
+                caption="What the Model Sees (28 x 28)"
+            )
+
+            st.write("Shape:", model_input.shape)
+            st.write("Min:", image_array.min())
+            st.write("Max:", image_array.max())
