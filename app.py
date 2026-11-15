@@ -3,7 +3,9 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from PIL import Image
+from sklearn.metrics import confusion_matrix
 from tensorflow import keras
+from tensorflow.keras.datasets import mnist
 from streamlit_drawable_canvas import st_canvas
 
 st.set_page_config(page_title="What Digit Did You Draw?")
@@ -41,6 +43,17 @@ def preprocess_canvas_image(canvas_image):
     model_input = image_array.reshape(1, 28, 28, 1)
 
     return image, image_array, model_input
+
+@st.cache_data
+def get_confusion_matrix():
+    (_, _), (X_test, y_test) = mnist.load_data()
+    X_test = X_test / 255.0
+    X_test = X_test.reshape(-1, 28, 28, 1)
+
+    test_probabilities = model.predict(X_test, verbose=0)
+    y_pred = np.argmax(test_probabilities, axis=1)
+
+    return confusion_matrix(y_test, y_pred)
 
 
 model = load_model()
@@ -225,6 +238,41 @@ with about_tab:
              "back to check its progress during training. When "
              "it was tested on 10,000 images it had never seen "
              "before, it classified 98.4% of them correctly.")
+
+    st.markdown("**Confusion Matrix**")
+    st.write("Each row is the real digit, and each column is the "
+             "model's guess. The diagonal shows correct predictions, "
+             "and every other square shows a mistake.")
+
+    with st.spinner("Checking the model on 10,000 test images..."):
+        matrix = get_confusion_matrix()
+
+    matrix_rows = []
+    for actual in range(10):
+        for predicted in range(10):
+            matrix_rows.append({
+                "Actual": actual,
+                "Predicted": predicted,
+                "Count": int(matrix[actual, predicted])
+            })
+    matrix_data = pd.DataFrame(matrix_rows)
+
+    heatmap = alt.Chart(matrix_data).mark_rect().encode(
+        x=alt.X("Predicted:O", title="Predicted Digit", axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("Actual:O", title="Actual Digit"),
+        color=alt.Color("Count:Q", legend=None)
+    )
+
+    labels = alt.Chart(matrix_data).mark_text(fontSize=10).encode(
+        x="Predicted:O",
+        y="Actual:O",
+        text="Count:Q",
+        color=alt.condition(alt.datum.Count > 500,
+                            alt.value("black"),
+                            alt.value("white"))
+    )
+
+    st.altair_chart(heatmap + labels)
 
 with pixel_tab:
     if has_drawing:
