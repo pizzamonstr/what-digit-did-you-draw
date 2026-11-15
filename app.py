@@ -138,26 +138,11 @@ with draw_tab:
             predicted_digit = int(np.argmax(probabilities))
             confidence = float(np.max(probabilities))
 
-            st.metric("Predicted Digit", predicted_digit)
-            st.metric("Confidence", f"{confidence:.1%}")
-
-            chart_data = pd.DataFrame({
-                "Digit": np.arange(10),
-                "Probability": probabilities
-            })
-
-            probability_chart = (
-                alt.Chart(chart_data).mark_bar().encode(
-                    x=alt.X("Digit:O",
-                            title="Digit", axis=alt.Axis(labelAngle=0)),
-                    y=alt.Y("Probability:Q",
-                            title="Probability", axis=alt.Axis(format="%"),
-                            scale=alt.Scale(domain=[0, 1]))
-                )
-            )
-
-            st.write("**Probability for Each Digit**")
-            st.altair_chart(probability_chart)
+            digit_col, confidence_col = st.columns(2)
+            with digit_col:
+                st.metric("Predicted Digit", predicted_digit)
+            with confidence_col:
+                st.metric("Confidence", f"{confidence:.1%}")
 
             top_three = np.argsort(probabilities)[::-1][:3]
 
@@ -171,6 +156,27 @@ with draw_tab:
                     with st.container(border=True):
                         st.metric(guess_labels[i], digit)
                         st.caption(f"{probabilities[digit]:.1%}")
+
+            chart_data = pd.DataFrame({
+                "Digit": np.arange(10),
+                "Probability": probabilities
+            })
+
+            probability_chart = (
+                alt.Chart(chart_data).mark_bar().encode(
+                    x=alt.X("Digit:O",
+                            title="Digit", axis=alt.Axis(labelAngle=0)),
+                    y=alt.Y("Probability:Q",
+                            title="Probability", axis=alt.Axis(format="%"),
+                            scale=alt.Scale(domain=[0, 1])),
+                    color=alt.condition(alt.datum.Digit == predicted_digit,
+                                        alt.value("#FF4B4B"),
+                                        alt.value("#83C9FF"))
+                )
+            )
+
+            st.write("**Probability for Each Digit**")
+            st.altair_chart(probability_chart)
 
 with how_tab:
     st.markdown("**1. You Draw a Digit**")
