@@ -10,6 +10,13 @@ from streamlit_drawable_canvas import st_canvas
 
 st.set_page_config(page_title="What Digit Did You Draw?")
 
+st.markdown(
+    "<style>"
+    "[role='tab'] p {font-size: 1.25rem !important;}"
+    "</style>",
+    unsafe_allow_html=True
+)
+
 if "canvas_key" not in st.session_state:
     st.session_state.canvas_key = 0
 
@@ -62,11 +69,11 @@ st.title("What Digit Did You Draw?")
 st.subheader("Handwritten Digit Classifier")
 
 draw_tab, how_tab, tips_tab, about_tab, pixel_tab = st.tabs([
-    "Classifier",
-    "How It Works",
-    "Tips",
-    "About the Model",
-    "Pixel Values"
+    "**Classifier**",
+    "**How It Works**",
+    "**Tips**",
+    "**About the Model**",
+    "**Pixel Values**"
 ])
 
 has_drawing = False
